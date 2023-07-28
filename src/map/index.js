@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import MapHandler from "./handler";
 import Land from "./land";
+import geotokml from "./geotokml";
 
 const googleHybrid = L.tileLayer(
   "http://{s}.google.com/vt?lyrs=s,h&x={x}&y={y}&z={z}",
@@ -67,6 +68,29 @@ function createLand(name, dir) {
   lands.value.push(Land.fromFile(file, mapHandler));
 }
 
+function downloadLandKml(land) {
+  const kmlData = geotokml(land.drawnItems.toGeoJSON(), land.file.name.replace(".kml", ""));
+  downloadKmlFile(land.file.name, kmlData);
+}
+
+function downloadLayerKml(layer) {
+  const kmlData = geotokml(layer.toGeoJSON(), layer.feature.properties.name);
+  downloadKmlFile(layer.feature.properties.name + ".kml", kmlData);
+}
+
+function downloadKmlFile(name, kmlData) {
+  var blob = new Blob([kmlData], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+
+  // Cleanup
+  URL.revokeObjectURL(url);
+}
+
 function updateTooltipScale() {
   var zoom = map.getZoom();
 
@@ -83,6 +107,8 @@ const geomap = {
   init: init,
   loadKmlFiles: loadKmlFiles,
   createLand: createLand,
+  downloadLandKml: downloadLandKml,
+  downloadLayerKml: downloadLayerKml,
   lands: lands,
 };
 

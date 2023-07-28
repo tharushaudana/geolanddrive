@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router';
 import { storage, selectedDir } from '../storage';
 import { onMounted, reactive, ref } from 'vue';
 import { geomap, lands } from '../map';
+import { area } from '@turf/turf';
 
 const router = useRouter();
 const dirname = router.currentRoute.value.params.dirname;
@@ -30,6 +31,18 @@ function createLand() {
     geomap.createLand(name, selectedDir.value);
 }
 
+function renameLayer(layer, land) {
+    console.log(area(layer.toGeoJSON()));
+
+    var name = prompt("Enter land name", layer.feature.properties.name);
+    if (name === null || name.trim().length === 0) return;
+
+    layer.feature.properties.name = name;
+    layer.setTooltipContent(name);
+
+    land.save();
+}
+
 </script>
 
 <template>
@@ -38,11 +51,13 @@ function createLand() {
             <div>
                 <nav class="navbar bg-dark">
                     <div class="container-fluid">
-                        <span class="navbar-brand mb-0 h1 text-light">GeoLand<br><span class="text-white-50" style="font-size: 13px;">{{ dirname }}</span></span>
+                        <span class="navbar-brand mb-0 h1 text-light">GeoLand<br><span class="text-white-50"
+                                style="font-size: 13px;">{{ dirname }}</span></span>
                     </div>
                 </nav>
                 <div class="p-3 border-bottom">
-                    <button class="btn btn-sm btn-outline-primary" @click="createLand"><i class="fa-solid fa-plus"></i>&nbsp;Create Land</button>
+                    <button class="btn btn-sm btn-outline-primary" @click="createLand"><i
+                            class="fa-solid fa-plus"></i>&nbsp;Create Land</button>
                 </div>
                 <ul class="list-unstyled ps-0">
                     <li v-for="(land, i) in lands">
@@ -53,24 +68,69 @@ function createLand() {
                                 {{ land.file.name.replace(".kml", "") }}
                             </span>
                         </button>
-                        <div class="collapse bg-body-secondary px-2 py-1" :id="'land-collapse-' + i">
-                            <div class="mb-1">
-                                <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
-                                    @click="land.fitBounds()">View</a> |
-                                <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
-                                    v-if="!land.editingEnabled" @click="enableLandEditing(land, true)">Edit</a>
-                                <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;" v-else
-                                    @click="enableLandEditing(land, false)">Cancel Edit</a> |
-                                <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
-                                    @click="land.fitBounds()">Download</a>
+                        <div class="collapse" :id="'land-collapse-' + i">
+                            <div class="px-2 py-1 bg-body-secondary">
+                                <div class="mb-1">
+                                    <a v-if="land.drawnItems.getLayers().length > 0" class="fst-italic text-decoration-none"
+                                        style="font-size: 10px; cursor: pointer;" @click="land.fitBounds()">View</a> |
+                                    <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
+                                        v-if="!land.editingEnabled" @click="enableLandEditing(land, true)">Edit</a>
+                                    <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
+                                        v-else @click="enableLandEditing(land, false)">Cancel Edit</a> |
+                                    <a v-if="land.drawnItems.getLayers().length > 0" class="fst-italic text-decoration-none"
+                                        style="font-size: 10px; cursor: pointer;"
+                                        @click="geomap.downloadLandKml(land)">Download</a>
+                                </div>
+                                <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                                    <li v-for="(layer, j) in land.drawnItems.getLayers()">
+                                        <div class="d-flex">
+                                            <div class="dropdown">
+                                                <a href="#" class="text-decoration-none text-secondary" type="button"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fa-solid fa-circle-info"></i>
+                                                </a>
+                                                <div class="dropdown-menu p-2" style="font-size: 12px;">
+                                                    <b>Acres: 1.05</b>
+                                                    <div style="height: 5px;"></div>
+                                                    <table>
+                                                        <tr>
+                                                            <td>acres:</td>
+                                                            <td>1</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>roods:</td>
+                                                            <td>1</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>perchs:</td>
+                                                            <td>1</td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            &nbsp;&nbsp;
+                                            <div class="dropdown">
+                                                <a href="#" class="text-decoration-none text-secondary"
+                                                    @click="geomap.downloadLayerKml(layer)">
+                                                    <i class="fa-solid fa-download"></i>
+                                                </a>
+                                                &nbsp;
+                                                <a href="#"
+                                                    class="link-body-emphasis d-inline-flex text-decoration-none rounded"
+                                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    {{ layer.feature.properties.name }}
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="#">Info</a></li>
+                                                    <li><a class="dropdown-item" href="#"
+                                                            @click="renameLayer(layer, land)">Rename</a></li>
+                                                    <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
                             </div>
-                            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                                <li v-for="layer in land.drawnItems._layers">
-                                    <i class="fa-solid fa-globe"></i>&nbsp;&nbsp;
-                                    <a href="#" class="link-body-emphasis d-inline-flex text-decoration-none rounded">{{
-                                        layer.feature.properties.name }}</a>
-                                </li>
-                            </ul>
                         </div>
                     </li>
                 </ul>

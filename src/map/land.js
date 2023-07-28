@@ -1,8 +1,5 @@
 import createDrawControl from "./drawcontrol";
-import tokml from "tokml";
 import geotokml from "./geotokml";
-
-//https://github.com/mapbox/tokml
 
 class Land {
   constructor(handler) {
@@ -24,17 +21,8 @@ class Land {
 
     Land.#addNonGroupLayers(geojsonLayer, this.drawnItems);
 
+    this.showToolTips();
     this.save();
-  }
-
-  setLayers(b) {
-    if (!b) this.layers = this.drawnItems._layers;
-    else  { 
-      this.layers = {};
-      //this.layers['78'] = {feature: {}};
-      //this.layers['78'].feature = {properties: {name: 'testlayer'}};
-    }
-    console.log(this.layers);
   }
 
   fitBounds() {
@@ -49,12 +37,25 @@ class Land {
     this.editingEnabled = b;
   }
 
+  showToolTips() {
+    this.drawnItems.eachLayer(function (layer) {
+      //layer.setStyle({ color: 'red', fillColor: 'blue', fillOpacity: 0.5 });
+
+      layer.bindTooltip(layer.feature.properties.name, {
+        permanent: true,
+        direction: "center",
+        className: "custom-tooltip",
+      });
+
+    });
+  }
+
   save() {
     var geojson = this.drawnItems.toGeoJSON();
 
     var kmlStr = geotokml(geojson, this.file.name.replace(".kml", ""));
 
-    console.log(kmlStr);
+    //console.log(kmlStr);
 
     this.file.rewriteContent(kmlStr);
   }
@@ -67,6 +68,8 @@ class Land {
     handler.map.addLayer(land.drawnItems);
 
     file.reloadContent();
+    
+    console.log(land.drawnItems);
 
     //### for empty files
     if (file.content.trim().length == 0) return land;
@@ -81,16 +84,14 @@ class Land {
 
     this.#addNonGroupLayers(geojsonLayer, land.drawnItems);
 
-    //handler.map.addLayer(land.drawnItems);
-
-    land.setLayers(false);
+    land.showToolTips();
 
     return land;
   }
 
   static #createGeoJsonLayer(geojsonData) {
     var geojsonLayer = L.geoJSON(geojsonData, {
-      onEachFeature: function (feature, layer) {
+      /*onEachFeature: function (feature, layer) {
         var properties = feature.properties;
 
         layer.bindTooltip(properties.name, {
@@ -103,7 +104,7 @@ class Land {
           var properties = event.target.feature.properties;
           console.log("Clicked Feature Properties:", properties);
         });
-      },
+      },*/
     });
 
     return geojsonLayer;
