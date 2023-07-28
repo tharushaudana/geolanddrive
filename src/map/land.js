@@ -1,44 +1,30 @@
 import createDrawControl from "./drawcontrol";
 import tokml from "tokml";
+import geotokml from "./geotokml";
 
 //https://github.com/mapbox/tokml
 
 class Land {
   constructor(handler) {
     this.drawnItems = new L.FeatureGroup();
-    this.drawControl = createDrawControl(this.drawnItems);
+    this.drawControl = createDrawControl(this);
     this.file = null;
     this.handler = handler;
     this.notify = 0;
 
     this.editingEnabled = false;
+  }
 
-    this.handler.map.on('draw:created', (e) => {
-      if (!this.editingEnabled) return;
+  addLayer(layer, name) {
+    var geojsonData = layer.toGeoJSON();
 
-      var layer = e.layer;
+    geojsonData.properties['name'] = name;
 
-      var geojson = layer.toGeoJSON();
-      geojson.properties['name'] = 'testlayer';
-      
-      console.log(geojson);
+    var geojsonLayer = Land.#createGeoJsonLayer(geojsonData);
 
-      var geojsonLayer = L.geoJSON(geojson, {
+    Land.#addNonGroupLayers(geojsonLayer, this.drawnItems);
 
-      });
-
-      //console.log(geojsonLayer);
-
-      //_this.drawnItems.addLayer(layer);
-
-      Land.#addNonGroupLayers(geojsonLayer, this.drawnItems);
-
-      console.log(this.drawnItems);
-
-      this.notify = this.notify + 1;
-      
-      //console.log(layer.toGeoJSON());
-    });
+    this.save();
   }
 
   setLayers(b) {
@@ -64,40 +50,45 @@ class Land {
   }
 
   save() {
-    var combinedGeoJSON = {
-      type: "FeatureCollection",
-      features: [],
-    };
+    var geojson = this.drawnItems.toGeoJSON();
 
-    //console.log(this.drawnItems.toGeoJSON());
+    var kmlStr = geotokml(geojson, this.file.name.replace(".kml", ""));
 
-    this.drawnItems.eachLayer(function (layer) {
-      var geojsonData = layer.toGeoJSON();
+    console.log(kmlStr);
 
-      console.log(geojsonData);
-
-      /*geojsonData.features.forEach(function (feature) {
-        combinedGeoJSON.features.push(feature);
-      });*/
-      combinedGeoJSON.features.push(geojsonData);
-    });
-
-    var kmlData = tokml(this.drawnItems.toGeoJSON(), {
-      name: "Combined KML Layers",
-    });
-
-    console.log(kmlData);
+    this.file.rewriteContent(kmlStr);
   }
 
   static fromFile(file, handler) {
     const land = new Land(handler);
 
+    land.file = file;
+
+    handler.map.addLayer(land.drawnItems);
+
     file.reloadContent();
+
+    //### for empty files
+    if (file.content.trim().length == 0) return land;
 
     var geojsonData = toGeoJSON.kml(
       new DOMParser().parseFromString(file.content, "text/xml")
     );
 
+    //console.log(geojsonData);
+
+    var geojsonLayer = this.#createGeoJsonLayer(geojsonData);
+
+    this.#addNonGroupLayers(geojsonLayer, land.drawnItems);
+
+    //handler.map.addLayer(land.drawnItems);
+
+    land.setLayers(false);
+
+    return land;
+  }
+
+  static #createGeoJsonLayer(geojsonData) {
     var geojsonLayer = L.geoJSON(geojsonData, {
       onEachFeature: function (feature, layer) {
         var properties = feature.properties;
@@ -111,22 +102,11 @@ class Land {
         layer.on("click", function (event) {
           var properties = event.target.feature.properties;
           console.log("Clicked Feature Properties:", properties);
-          //layer.editing.enable();
-          //handler.addDrawControlAndRemoveOlds(land.drawControl);
-          land.save();
         });
       },
     });
 
-    land.file = file;
-
-    this.#addNonGroupLayers(geojsonLayer, land.drawnItems);
-
-    handler.map.addLayer(land.drawnItems);
-
-    land.setLayers(false);
-
-    return land;
+    return geojsonLayer;
   }
 
   static #addNonGroupLayers(layer, group) {

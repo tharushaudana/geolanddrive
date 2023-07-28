@@ -15,6 +15,20 @@ class Dir {
     console.log(this.files);
   }
 
+  createFile(name) {
+    if (this.handler.data[this.name].includes(name)) return;
+
+    const file = new KmlFile(name, "");
+
+    file.create(this.name);
+    this.handler.data[this.name].push(name);
+    this.files.push(file);
+    //----
+    this.handler.saveChanges();
+
+    return file;
+  }
+
   addFile(file) {
     file.create(this.name);
     //----

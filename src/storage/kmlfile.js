@@ -20,6 +20,10 @@ class KmlFile {
       this.content = localStorage.getItem(KmlFile._fileKey(this.name, this.dirname));
     }
 
+    rewriteContent(content) {
+      localStorage.setItem(KmlFile._fileKey(this.name, this.dirname), content);
+    }
+
     static load(name, dirname) {
       //if (!this.exists(name, dirname)) return null;
       console.log(name, dirname);

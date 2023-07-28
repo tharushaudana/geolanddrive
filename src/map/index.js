@@ -1,3 +1,4 @@
+import { ref } from "vue";
 import MapHandler from "./handler";
 import Land from "./land";
 
@@ -27,7 +28,7 @@ var mapData = {
     }*/
 };
 
-var lands = [];
+var lands = ref([]);
 
 function init(id) {
   map = L.map(id).setView([51.505, -0.09], 13);
@@ -35,8 +36,13 @@ function init(id) {
   googleHybrid.addTo(map);
   googleSat.addTo(map);
 
-  map.on("draw:edited", function (event) {
-    console.log(event);
+  map.on("draw:edited", (e) => {
+    mapHandler.currentDrawControl.land.save();
+  });
+
+  map.on('draw:created', (e) => {
+    var name = prompt("Enter layer name:");
+    mapHandler.currentDrawControl.land.addLayer(e.layer, name);
   });
 
   map.on('zoom', updateTooltipScale);
@@ -50,10 +56,15 @@ function init(id) {
 function loadKmlFiles(files) {
   for (var i = 0; i < files.length; i++) {
     const file = files[i];
-    lands.push(Land.fromFile(file, mapHandler));
+    lands.value.push(Land.fromFile(file, mapHandler));
   }
   
   updateTooltipScale();
+}
+
+function createLand(name, dir) {
+  const file = dir.createFile(name + ".kml");
+  lands.value.push(Land.fromFile(file, mapHandler));
 }
 
 function updateTooltipScale() {
@@ -71,7 +82,8 @@ function updateTooltipScale() {
 const geomap = {
   init: init,
   loadKmlFiles: loadKmlFiles,
+  createLand: createLand,
   lands: lands,
 };
 
-export default geomap;
+export { geomap, lands };

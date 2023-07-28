@@ -1,5 +1,5 @@
-function createDrawControl(drawnItems) {
-  return new L.Control.Draw({
+function createDrawControl(land) {
+  var control = new L.Control.Draw({
     draw: {
       polyline: false,
       circle: false,
@@ -17,9 +17,14 @@ function createDrawControl(drawnItems) {
       },
     },
     edit: {
-      featureGroup: drawnItems,
+      featureGroup: land.drawnItems,
     },
   });
+
+  //### Custom parameter
+  control["land"] = land;
+
+  return control;
 }
 
 export default createDrawControl;
