@@ -4,11 +4,21 @@ import { storage, selectedDir } from '../storage';
 import { onMounted, reactive, ref } from 'vue';
 import { geomap, lands } from '../map';
 import { area } from '@turf/turf';
+import calculateMeasureData from '../map/measure';
 
 const router = useRouter();
 const dirname = router.currentRoute.value.params.dirname;
 
 //const lands = ref([]);
+
+const measureData = ref({
+    acres: 1.5,
+    arp: {
+        a: 1,
+        r: 2,
+        p: 3
+    },
+})
 
 storage.selectDir(dirname);
 
@@ -41,6 +51,10 @@ function renameLayer(layer, land) {
     layer.setTooltipContent(name);
 
     land.save();
+}
+
+function measureLayer(layer) {
+    measureData.value = calculateMeasureData(layer.toGeoJSON());
 }
 
 </script>
@@ -86,24 +100,24 @@ function renameLayer(layer, land) {
                                         <div class="d-flex">
                                             <div class="dropdown">
                                                 <a href="#" class="text-decoration-none text-secondary" type="button"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    data-bs-toggle="dropdown" aria-expanded="false" @click="measureLayer(layer)">
                                                     <i class="fa-solid fa-circle-info"></i>
                                                 </a>
                                                 <div class="dropdown-menu p-2" style="font-size: 12px;">
-                                                    <b>Acres: 1.05</b>
+                                                    <b>Acres: {{ measureData.acres }}</b>
                                                     <div style="height: 5px;"></div>
                                                     <table>
                                                         <tr>
                                                             <td>acres:</td>
-                                                            <td>1</td>
+                                                            <td>{{ measureData.arp.a }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td>roods:</td>
-                                                            <td>1</td>
+                                                            <td>{{ measureData.arp.r }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td>perchs:</td>
-                                                            <td>1</td>
+                                                            <td>{{ measureData.arp.p }}</td>
                                                         </tr>
                                                     </table>
                                                 </div>
