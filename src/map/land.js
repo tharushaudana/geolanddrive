@@ -9,6 +9,58 @@ class Land {
     this.drawControl = createDrawControl(this.drawnItems);
     this.file = null;
     this.handler = handler;
+    this.notify = 0;
+
+    this.editingEnabled = false;
+
+    this.handler.map.on('draw:created', (e) => {
+      if (!this.editingEnabled) return;
+
+      var layer = e.layer;
+
+      var geojson = layer.toGeoJSON();
+      geojson.properties['name'] = 'testlayer';
+      
+      console.log(geojson);
+
+      var geojsonLayer = L.geoJSON(geojson, {
+
+      });
+
+      //console.log(geojsonLayer);
+
+      //_this.drawnItems.addLayer(layer);
+
+      Land.#addNonGroupLayers(geojsonLayer, this.drawnItems);
+
+      console.log(this.drawnItems);
+
+      this.notify = this.notify + 1;
+      
+      //console.log(layer.toGeoJSON());
+    });
+  }
+
+  setLayers(b) {
+    if (!b) this.layers = this.drawnItems._layers;
+    else  { 
+      this.layers = {};
+      //this.layers['78'] = {feature: {}};
+      //this.layers['78'].feature = {properties: {name: 'testlayer'}};
+    }
+    console.log(this.layers);
+  }
+
+  fitBounds() {
+    this.handler.map.fitBounds(this.drawnItems.getBounds());
+  }
+
+  enableEditing(b) {
+    if (!this.editingEnabled && b)
+      this.handler.addDrawControlAndRemoveOlds(this.drawControl, this);
+    else this.handler.removeCurrentDrawControls();
+
+    this.editingEnabled = b;
   }
 
   save() {
@@ -20,9 +72,8 @@ class Land {
     //console.log(this.drawnItems.toGeoJSON());
 
     this.drawnItems.eachLayer(function (layer) {
-        
       var geojsonData = layer.toGeoJSON();
-      
+
       console.log(geojsonData);
 
       /*geojsonData.features.forEach(function (feature) {
@@ -31,7 +82,9 @@ class Land {
       combinedGeoJSON.features.push(geojsonData);
     });
 
-    var kmlData = tokml(this.drawnItems.toGeoJSON(), { name: "Combined KML Layers" });
+    var kmlData = tokml(this.drawnItems.toGeoJSON(), {
+      name: "Combined KML Layers",
+    });
 
     console.log(kmlData);
   }
@@ -48,6 +101,7 @@ class Land {
     var geojsonLayer = L.geoJSON(geojsonData, {
       onEachFeature: function (feature, layer) {
         var properties = feature.properties;
+
         layer.bindTooltip(properties.name, {
           permanent: true,
           direction: "center",
@@ -69,6 +123,8 @@ class Land {
     this.#addNonGroupLayers(geojsonLayer, land.drawnItems);
 
     handler.map.addLayer(land.drawnItems);
+
+    land.setLayers(false);
 
     return land;
   }

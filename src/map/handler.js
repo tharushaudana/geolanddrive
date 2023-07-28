@@ -4,16 +4,20 @@ class MapHandler {
     this.drawControls = [];
   }
 
-  addDrawControlAndRemoveOlds(control) {
+  addDrawControlAndRemoveOlds(control, land) {
+    this.removeCurrentDrawControls();
+
+    this.drawControls.push({ control: control, land: land });
+    this.map.addControl(control);
+  }
+
+  removeCurrentDrawControls() {
     for (var i = 0; i < this.drawControls.length; i++) {
-        console.log("sdsd");
-      this.map.removeControl(this.drawControls[i]);
+      this.map.removeControl(this.drawControls[i].control);
+      this.drawControls[i].land.editingEnabled = false;
     }
 
     this.drawControls = [];
-
-    this.drawControls.push(control);
-    this.map.addControl(control);
   }
 }
 

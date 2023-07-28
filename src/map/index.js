@@ -29,31 +29,6 @@ var mapData = {
 
 var lands = [];
 
-var drawnItems = new L.FeatureGroup();
-//map.addLayer(drawnItems);
-
-var drawControl = new L.Control.Draw({
-  draw: {
-    polyline: false,
-    circle: false,
-    marker: false,
-    circlemarker: false,
-    polygon: {
-      allowIntersection: false, // Set to true if you want to allow intersecting edges
-      drawError: {
-        color: "#b00b00", // Error color for overlapping edges
-        timeout: 1000, // Time in milliseconds for displaying the error
-      },
-      shapeOptions: {
-        color: "#3388ff", // Color of the polygon
-      },
-    },
-  },
-  edit: {
-    featureGroup: drawnItems,
-  },
-});
-
 function init(id) {
   map = L.map(id).setView([51.505, -0.09], 13);
 
@@ -96,6 +71,7 @@ function updateTooltipScale() {
 const geomap = {
   init: init,
   loadKmlFiles: loadKmlFiles,
+  lands: lands,
 };
 
 export default geomap;
