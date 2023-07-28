@@ -5,6 +5,7 @@ const PERCHS_FOR_ACRE = 160;
 const PERCHS_FOR_ROOD = 40;
 
 function calculateMeasureData(geojson) {
+    console.log(geojson);
   const perchs = squareMeetersToPerchs(area(geojson));
   const acres = perchs / PERCHS_FOR_ACRE;
 

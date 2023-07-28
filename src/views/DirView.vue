@@ -66,6 +66,8 @@ function deleteFile(file) {
                     <h2 class="text-muted">No KML Files</h2>
                     <br>
                     <input class="form-control" type="file" @change="handleFileChooserChange" multiple>
+                    <br> OR <br>
+                    <RouterLink :to="{name: 'map', params: {dirname: dirname}}"><button class="btn btn-primary">Create in Map</button></RouterLink>
                 </div>
             </div>
         </div>

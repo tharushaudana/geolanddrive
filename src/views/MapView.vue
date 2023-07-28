@@ -89,7 +89,7 @@ function measureLayer(layer) {
                                         style="font-size: 10px; cursor: pointer;" @click="land.fitBounds()">View</a> |
                                     <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
                                         v-if="!land.editingEnabled" @click="enableLandEditing(land, true)">Edit</a>
-                                    <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
+                                    <a class="fst-italic text-decoration-none text-danger" style="font-size: 10px; cursor: pointer;"
                                         v-else @click="enableLandEditing(land, false)">Cancel Edit</a> |
                                     <a v-if="land.drawnItems.getLayers().length > 0" class="fst-italic text-decoration-none"
                                         style="font-size: 10px; cursor: pointer;"
