@@ -25,6 +25,10 @@ class Land {
     this.save();
   }
 
+  highlightLayer(layer, b) {
+    layer.setStyle({ fillColor: b ? 'yellow' : '#3388ff' });
+  }
+
   fitBounds() {
     this.handler.map.fitBounds(this.drawnItems.getBounds());
   }
@@ -68,8 +72,6 @@ class Land {
     handler.map.addLayer(land.drawnItems);
 
     file.reloadContent();
-    
-    console.log(land.drawnItems);
 
     //### for empty files
     if (file.content.trim().length == 0) return land;

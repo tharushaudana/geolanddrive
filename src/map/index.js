@@ -32,7 +32,7 @@ var mapData = {
 var lands = ref([]);
 
 function init(id) {
-  map = L.map(id).setView([51.505, -0.09], 13);
+  map = L.map(id).setView([5.991659323751306, 80.72153689607822], 18);
 
   googleHybrid.addTo(map);
   googleSat.addTo(map);
@@ -66,6 +66,10 @@ function loadKmlFiles(files) {
 function createLand(name, dir) {
   const file = dir.createFile(name + ".kml");
   lands.value.push(Land.fromFile(file, mapHandler));
+}
+
+function fitBounds(bouds) {
+  map.fitBounds(bouds);
 }
 
 function downloadLandKml(land) {
@@ -107,6 +111,7 @@ const geomap = {
   init: init,
   loadKmlFiles: loadKmlFiles,
   createLand: createLand,
+  fitBounds: fitBounds,
   downloadLandKml: downloadLandKml,
   downloadLayerKml: downloadLayerKml,
   lands: lands,

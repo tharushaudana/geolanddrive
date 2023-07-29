@@ -12,7 +12,6 @@ class Dir {
       const fname = this.handler.data[this.name][i];
       this.files.push(KmlFile.load(fname, this.name));
     }
-    console.log(this.files);
   }
 
   createFile(name) {

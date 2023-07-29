@@ -18,7 +18,11 @@ const measureData = ref({
         r: 2,
         p: 3
     },
-})
+});
+
+const layerOnClickListeners = [];
+
+const clickedLayer = ref({ filename: null, leafletId: null, });
 
 storage.selectDir(dirname);
 
@@ -57,11 +61,55 @@ function measureLayer(layer) {
     measureData.value = calculateMeasureData(layer.toGeoJSON());
 }
 
+function getAllLayersCount() {
+    var c = 0;
+
+    for (const land of lands.value) {
+        const layers = land.drawnItems.getLayers();
+
+        c += layers.length;
+
+        //### onclick listener
+        for (const layer of layers) {
+            if (layerOnClickListeners.includes(layer._leaflet_id)) continue;
+
+            layer.on("click", function (event) {
+                clickedLayer.value = {
+                    filename: land.file.name,
+                    leafletId: layer._leaflet_id,
+                }
+            });
+
+            layerOnClickListeners.push(layer._leaflet_id);
+        }
+    }
+
+    return c;
+}
+
+function landIsClicked(land, i) {
+    if (land.file.name !== clickedLayer.value.filename) return;
+    
+    const elem = document.getElementById(`land-collapse-${i}`);
+
+    if (!elem.classList.contains('show')) elem.classList.add('show');
+    
+    elem.scrollIntoView({ behavior: 'smooth' });
+
+    clickedLayer.value = { filename: null, leafletId: null, };
+
+    return true;
+}
+
+function viewLayer(layer) {
+    geomap.fitBounds(layer.getBounds());
+}
+
 </script>
 
 <template>
-    <div class="d-flex h-100 w-100">
-        <div class="flex-shrink-1 h-100" style="width: 300px; overflow-y: scroll;">
+    <div class="d-flex h-100 w-100" style="position: relative;">
+        <div class="flex-shrink-1" style="height: calc(100% - 50px); width: 300px; overflow-y: scroll; overflow-x: hidden;">
             <div>
                 <nav class="navbar bg-dark">
                     <div class="container-fluid">
@@ -82,25 +130,27 @@ function measureLayer(layer) {
                                 {{ land.file.name.replace(".kml", "") }}
                             </span>
                         </button>
-                        <div class="collapse" :id="'land-collapse-' + i">
-                            <div class="px-2 py-1 bg-body-secondary">
+                        <div class="collapse" :data="landIsClicked(land, i)" :id="'land-collapse-' + i">
+                            <div class="px-2 py-1 bg-body-secondary" style="border-top: 1px dashed #000;">
                                 <div class="mb-1">
                                     <a v-if="land.drawnItems.getLayers().length > 0" class="fst-italic text-decoration-none"
                                         style="font-size: 10px; cursor: pointer;" @click="land.fitBounds()">View</a> |
                                     <a class="fst-italic text-decoration-none" style="font-size: 10px; cursor: pointer;"
                                         v-if="!land.editingEnabled" @click="enableLandEditing(land, true)">Edit</a>
-                                    <a class="fst-italic text-decoration-none text-danger" style="font-size: 10px; cursor: pointer;"
-                                        v-else @click="enableLandEditing(land, false)">Cancel Edit</a> |
+                                    <a class="fst-italic text-decoration-none text-danger"
+                                        style="font-size: 10px; cursor: pointer;" v-else
+                                        @click="enableLandEditing(land, false)">Cancel Edit</a> |
                                     <a v-if="land.drawnItems.getLayers().length > 0" class="fst-italic text-decoration-none"
                                         style="font-size: 10px; cursor: pointer;"
                                         @click="geomap.downloadLandKml(land)">Download</a>
                                 </div>
                                 <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                                    <li v-for="(layer, j) in land.drawnItems.getLayers()">
+                                    <li v-for="(layer, j) in land.drawnItems.getLayers()" @mouseenter="land.highlightLayer(layer, true)" @mouseleave="land.highlightLayer(layer, false)">
                                         <div class="d-flex">
                                             <div class="dropdown">
                                                 <a href="#" class="text-decoration-none text-secondary" type="button"
-                                                    data-bs-toggle="dropdown" aria-expanded="false" @click="measureLayer(layer)">
+                                                    data-bs-toggle="dropdown" aria-expanded="false"
+                                                    @click="measureLayer(layer)">
                                                     <i class="fa-solid fa-circle-info"></i>
                                                 </a>
                                                 <div class="dropdown-menu p-2" style="font-size: 12px;">
@@ -135,7 +185,7 @@ function measureLayer(layer) {
                                                     {{ layer.feature.properties.name }}
                                                 </a>
                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="#">Info</a></li>
+                                                    <li><a class="dropdown-item" href="#" @click="viewLayer(layer)">View</a></li>
                                                     <li><a class="dropdown-item" href="#"
                                                             @click="renameLayer(layer, land)">Rename</a></li>
                                                     <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
@@ -148,6 +198,18 @@ function measureLayer(layer) {
                         </div>
                     </li>
                 </ul>
+            </div>
+            <div class="p-2" style="position: absolute; bottom: 0; font-size: 10px;">
+                <table class="w-100">
+                    <tr>
+                        <td>Directories:&nbsp;</td>
+                        <td>{{ lands.length }}</td>
+                    </tr>
+                    <tr>
+                        <td>Layers:&nbsp;</td>
+                        <td>{{ getAllLayersCount() }}</td>
+                    </tr>
+                </table>
             </div>
         </div>
         <div class="w-100 h-100">

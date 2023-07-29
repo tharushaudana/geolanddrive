@@ -26,7 +26,7 @@ class KmlFile {
 
     static load(name, dirname) {
       //if (!this.exists(name, dirname)) return null;
-      console.log(name, dirname);
+      
       const content = localStorage.getItem(this._fileKey(name, dirname));
       
       if (content === null) return;
