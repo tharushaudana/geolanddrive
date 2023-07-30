@@ -4,12 +4,10 @@ import { storage, selectedDir } from '../storage';
 import { onMounted, reactive, ref } from 'vue';
 import { geomap, lands } from '../map';
 import { area } from '@turf/turf';
-import calculateMeasureData from '../map/measure';
+import { calculateMeasureData, calculateAcres } from '../map/measure';
 
 const router = useRouter();
 const dirname = router.currentRoute.value.params.dirname;
-
-//const lands = ref([]);
 
 const measureData = ref({
     acres: 1.5,
@@ -19,6 +17,8 @@ const measureData = ref({
         p: 3
     },
 });
+
+const measureAreaAllLayers = ref('N/A');
 
 const layerOnClickListeners = [];
 
@@ -61,6 +61,20 @@ function measureLayer(layer) {
     measureData.value = calculateMeasureData(layer.toGeoJSON());
 }
 
+function measureAllLayers() {
+    var area = 0;
+
+    for (const land of lands.value) {
+        const layers = land.drawnItems.getLayers();
+
+        for (const layer of layers) {
+            area += calculateAcres(layer.toGeoJSON());
+        }
+    }
+
+    measureAreaAllLayers.value = area.toFixed(2);
+}
+
 function getAllLayersCount() {
     var c = 0;
 
@@ -89,11 +103,11 @@ function getAllLayersCount() {
 
 function landIsClicked(land, i) {
     if (land.file.name !== clickedLayer.value.filename) return;
-    
+
     const elem = document.getElementById(`land-collapse-${i}`);
 
     if (!elem.classList.contains('show')) elem.classList.add('show');
-    
+
     elem.scrollIntoView({ behavior: 'smooth' });
 
     clickedLayer.value = { filename: null, leafletId: null, };
@@ -113,8 +127,22 @@ function viewLayer(layer) {
             <div>
                 <nav class="navbar bg-dark">
                     <div class="container-fluid">
-                        <span class="navbar-brand mb-0 h1 text-light">GeoLand<br><span class="text-white-50"
-                                style="font-size: 13px;">{{ dirname }}</span></span>
+                        <span class="navbar-brand mb-0 h1 text-light">GeoLand</span>
+
+                        <div class="dropdown">
+                            <a href="#" class="text-decoration-none text-secondary" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false" @click="measureAllLayers()">
+                                <span class="text-white-50" style="font-size: 13px;">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    &nbsp;
+                                    {{ dirname }}
+                                </span>
+                            </a>
+                            <div class="dropdown-menu p-2" style="font-size: 12px;">
+                                <b>Total Area: {{ measureAreaAllLayers }} Acres</b>
+                            </div>
+                        </div>
+
                     </div>
                 </nav>
                 <div class="p-3 border-bottom">
@@ -145,7 +173,9 @@ function viewLayer(layer) {
                                         @click="geomap.downloadLandKml(land)">Download</a>
                                 </div>
                                 <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                                    <li v-for="(layer, j) in land.drawnItems.getLayers()" @mouseenter="land.highlightLayer(layer, true)" @mouseleave="land.highlightLayer(layer, false)">
+                                    <li v-for="(layer, j) in land.drawnItems.getLayers()"
+                                        @mouseenter="land.highlightLayer(layer, true)"
+                                        @mouseleave="land.highlightLayer(layer, false)">
                                         <div class="d-flex">
                                             <div class="dropdown">
                                                 <a href="#" class="text-decoration-none text-secondary" type="button"
@@ -185,7 +215,8 @@ function viewLayer(layer) {
                                                     {{ layer.feature.properties.name }}
                                                 </a>
                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="#" @click="viewLayer(layer)">View</a></li>
+                                                    <li><a class="dropdown-item" href="#" @click="viewLayer(layer)">View</a>
+                                                    </li>
                                                     <li><a class="dropdown-item" href="#"
                                                             @click="renameLayer(layer, land)">Rename</a></li>
                                                     <li><a class="dropdown-item text-danger" href="#">Delete</a></li>

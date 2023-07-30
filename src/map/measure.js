@@ -5,7 +5,6 @@ const PERCHS_FOR_ACRE = 160;
 const PERCHS_FOR_ROOD = 40;
 
 function calculateMeasureData(geojson) {
-    console.log(geojson);
   const perchs = squareMeetersToPerchs(area(geojson));
   const acres = perchs / PERCHS_FOR_ACRE;
 
@@ -13,6 +12,12 @@ function calculateMeasureData(geojson) {
     acres: acres.toFixed(2),
     arp: calculateARP(perchs),
   };
+}
+
+function calculateAcres(geojson) {
+  const perchs = squareMeetersToPerchs(area(geojson));
+  const acres = perchs / PERCHS_FOR_ACRE;
+  return acres;
 }
 
 function calculateARP(perchs) {
@@ -33,4 +38,4 @@ function squareMeetersToPerchs(squareMeeters) {
   return squareMeeters / SQUARE_METERS_FOR_PERCH;
 }
 
-export default calculateMeasureData;
+export { calculateMeasureData, calculateAcres };
