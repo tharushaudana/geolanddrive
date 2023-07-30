@@ -15,7 +15,7 @@ class Land {
   addLayer(layer, name) {
     var geojsonData = layer.toGeoJSON();
 
-    geojsonData.properties['name'] = name;
+    geojsonData.properties["name"] = name;
 
     var geojsonLayer = Land.#createGeoJsonLayer(geojsonData);
 
@@ -26,7 +26,7 @@ class Land {
   }
 
   highlightLayer(layer, b) {
-    layer.setStyle({ fillColor: b ? 'yellow' : '#3388ff' });
+    layer.setStyle({ fillColor: b ? "yellow" : "#3388ff" });
   }
 
   fitBounds() {
@@ -50,7 +50,6 @@ class Land {
         direction: "center",
         className: "custom-tooltip",
       });
-
     });
   }
 
@@ -79,8 +78,6 @@ class Land {
     var geojsonData = toGeoJSON.kml(
       new DOMParser().parseFromString(file.content, "text/xml")
     );
-
-    //console.log(geojsonData);
 
     var geojsonLayer = this.#createGeoJsonLayer(geojsonData);
 
@@ -118,10 +115,32 @@ class Land {
         Land.#addNonGroupLayers(layer, group);
       });
     } else {
-      //console.log(sourceLayer['_leaflet_id']);
+      if (Land.#isOuterBoundaryAndInnerBoundaryAreEqual(layer)) {
+        layer.feature.geometry.coordinates.splice(1);
+        layer.editing.latlngs[0].splice(1);
+      }
       group.addLayer(layer);
-      //makeLayerEditableOnClick(layer);
     }
+  }
+
+  static #isOuterBoundaryAndInnerBoundaryAreEqual(layer) {
+    if (layer.feature.geometry.coordinates.length < 2) return false;
+
+    if (
+      layer.feature.geometry.coordinates[0].length !==
+      layer.feature.geometry.coordinates[1].length
+    )
+      return false;
+
+    const outer = layer.feature.geometry.coordinates[0];
+    const inner = layer.feature.geometry.coordinates[1];
+
+    for (var i = 0; i < outer.length; i++) {
+      if (outer[i][0] !== inner[i][0] || outer[i][1] !== inner[i][1])
+        return false;
+    }
+
+    return true;
   }
 }
 

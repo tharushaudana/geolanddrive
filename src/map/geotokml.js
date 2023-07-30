@@ -54,13 +54,13 @@ function featureToKml(feature) {
 }
 
 function polygonToKml(feature) {
-  const kml = [];
+  var kml = [];
 
   const { name, ...properties } = feature.properties;
 
   const altitude = 100; // 100 meters
 
-  const coordinates = feature.geometry.coordinates;
+  /*const coordinates = feature.geometry.coordinates;
   const coordinatesStr = [];
 
   for (const coordinate of coordinates) {
@@ -68,7 +68,7 @@ function polygonToKml(feature) {
       if (arr.length < 3) arr.push(altitude);
       coordinatesStr.push(arr.join(","));
     }
-  }
+  }*/
 
   //console.log(coordinates);
 
@@ -82,11 +82,12 @@ function polygonToKml(feature) {
   kml.push("<Polygon>");
   kml.push("<extrude>1</extrude>");
   kml.push(`<altitudeMode>relativeToGround</altitudeMode>`);
-  kml.push("<outerBoundaryIs>");
-  kml.push("<LinearRing>");
-  kml.push(`<coordinates>${coordinatesStr.join(" ")}</coordinates>`);
-  kml.push("</LinearRing>");
-  kml.push("</outerBoundaryIs>");
+  //kml.push("<outerBoundaryIs>");
+  //kml.push("<LinearRing>");
+  //kml.push(`<coordinates>${coordinatesStr.join(" ")}</coordinates>`);
+  //kml.push("</LinearRing>");
+  //kml.push("</outerBoundaryIs>");
+  kml = kml.concat(polygonCoordinatesToKml(feature.geometry.coordinates, altitude));
   kml.push("</Polygon>");
 
   // Add other properties as custom data fields
@@ -95,6 +96,29 @@ function polygonToKml(feature) {
   }
 
   kml.push("</Placemark>");
+
+  return kml;
+}
+
+function polygonCoordinatesToKml(coordinates, altitude) {
+  const kml = [];
+
+  for (var i = 0; i < 2; i++) {
+    if (i > coordinates.length - 1) break;
+
+    const data = [];
+    
+    for (const point of coordinates[i]) {
+      if (point.length < 3) point.push(altitude);
+      data.push(point.join(","));
+    }
+
+    kml.push(i == 0 ? "<outerBoundaryIs>" : "<innerBoundaryIs>")
+    kml.push("<LinearRing>");
+    kml.push(`<coordinates>${data.join(" ")}</coordinates>`);
+    kml.push("</LinearRing>");
+    kml.push(i == 0 ? "</outerBoundaryIs>" : "</innerBoundaryIs>")
+  }
 
   return kml;
 }

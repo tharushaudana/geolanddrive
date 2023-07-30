@@ -2,6 +2,7 @@ import { ref } from "vue";
 import MapHandler from "./handler";
 import Land from "./land";
 import geotokml from "./geotokml";
+import {SimpleMapScreenshoter} from 'leaflet-simple-map-screenshoter'
 
 const googleHybrid = L.tileLayer(
   "http://{s}.google.com/vt?lyrs=s,h&x={x}&y={y}&z={z}",
@@ -47,6 +48,8 @@ function init(id) {
   });
 
   map.on('zoom', updateTooltipScale);
+
+  new SimpleMapScreenshoter().addTo(map)
 
   mapHandler = new MapHandler(map);
 
